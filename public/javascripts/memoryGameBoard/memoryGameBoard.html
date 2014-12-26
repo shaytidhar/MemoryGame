@@ -1,0 +1,9 @@
+<div>
+    <div class="container-fluid">
+        <span ng-repeat="card in cards">
+            <span class="btn btn-primary card" ng-click="turnCard($index + 1)">
+                    {{card.value}}    
+            </span>
+        </span>
+    </div>
+</div>

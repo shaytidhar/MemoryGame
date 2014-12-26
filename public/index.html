@@ -1,0 +1,30 @@
+<html>
+    <head>
+
+        <!-- jQuery -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        
+        <!-- Bootsrap -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+        
+        <!-- Angular CDN-->
+        <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+        
+        <!-- My JavaScript-->
+        <script src="javascripts/memoryGameApp.js"></script>
+        <script src="javascripts/memoryGamecontroller.js"></script>
+        <script src="javascripts/memoryGameBoard/memoryGameBoard.js"></script>
+        
+        <!-- CSS -->
+        <link rel="stylesheet" type="text/css" href="stylesheets/main.css">
+    </head>
+    <body>
+        <input type="button">
+        <div ng-app="myApp" ng-controller="memoryGameController">
+            <memory-game-board>
+            </memory-game-board>
+        </div>
+    </body>
+</html>
