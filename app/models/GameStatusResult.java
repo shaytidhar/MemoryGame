@@ -5,32 +5,55 @@ import java.util.List;
 import java.util.Map;
 
 public class GameStatusResult {
-	List<Player> 		lstChacngedPlayers 	= null;
-	Map<Integer, Card> 	mapChangedCards		= new HashMap<Integer, Card>();;
+	List<Player> 		chacngedPlayers 	= null;
+	Map<Integer, Card> 	changedCards		= new HashMap<Integer, Card>();
+	BoardStatus			boardStatus			= null;
 	
-	public List<Player> getLstChacngedPlayers() {
-		return lstChacngedPlayers;
+	public List<Player> getChacngedPlayers() {
+		return chacngedPlayers;
 	}
 	
-	public void setLstChacngedPlayers(List<Player> lstChacngedPlayers) {
-		this.lstChacngedPlayers = lstChacngedPlayers;
+	public void setChacngedPlayers(List<Player> lstChacngedPlayers) {
+		this.chacngedPlayers = lstChacngedPlayers;
 	}
 	
-	public Map<Integer, Card> getCrdChangedCards() {
-		return mapChangedCards;
+	public BoardStatus getBoardStatus() {
+		return boardStatus;
+	}
+
+	public void setBoardStatus(BoardStatus tsTurnStatus) {
+		this.boardStatus = tsTurnStatus;
+	}
+
+	public Map<Integer, Card> getChangedCards() {
+		return this.changedCards;
 	}
 	
-	public void setChangedCardsAllCards(List<Card> lstAllCards) {
+	public void setUpsideDownChangedCards(Map<Integer, Card> mpChangedCards) {
 		
-		// Run through the given cards
-		for (int nCardIndex = 0; nCardIndex < lstAllCards.size(); nCardIndex++)
-		{
-			this.mapChangedCards.put(nCardIndex, lstAllCards.get(nCardIndex));
+		// Run through changed cards
+		for (Integer key : mpChangedCards.keySet()){
+		
+			// Duplicate card
+			Card crdToDisplay = new Card(mpChangedCards.get(key));
+			
+			crdToDisplay.setValue(null);
+			
+			// Duplicate
+			this.changedCards.put(key, crdToDisplay);
 		}
 	}
 	
-	public void setChangedCard(Card crdChangedCard, int nCardIndex) {
+	public void setChangedCards(Map<Integer, Card> mpChangedCards) {
 		
-		this.mapChangedCards.put(nCardIndex, crdChangedCard);
+		// Run through changed cards
+		for (Integer key : mpChangedCards.keySet()){
+		
+			// Duplicate card
+			Card crdToDisplay = new Card(mpChangedCards.get(key));
+			
+			// Duplicate
+			this.changedCards.put(key, crdToDisplay);
+		}
 	}
 }

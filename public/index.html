@@ -12,17 +12,22 @@
         <!-- Angular CDN-->
         <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
         
+        <!-- Alertify -->
+        <script src="javascripts/alertify.js"></script>
+        <link rel="stylesheet" type="text/css" href="stylesheets/alertify-bootstrap-3.css">
+        
         <!-- My JavaScript-->
         <script src="javascripts/memoryGameApp.js"></script>
         <script src="javascripts/memoryGamecontroller.js"></script>
         <script src="javascripts/memoryGameBoard/memoryGameBoard.js"></script>
         
-        <!-- CSS -->
+        <!-- My CSS -->
         <link rel="stylesheet" type="text/css" href="stylesheets/main.css">
     </head>
     <body>
-        <input type="button">
+        
         <div ng-app="myApp" ng-controller="memoryGameController">
+            <input type="button" value="אפס לוח" class="btn" ng-click="initBoard()">
             <memory-game-board>
             </memory-game-board>
         </div>

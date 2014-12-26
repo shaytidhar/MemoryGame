@@ -1,7 +1,7 @@
 <div>
     <div class="container-fluid">
         <span ng-repeat="card in cards">
-            <span class="btn btn-primary card" ng-click="turnCard($index + 1)">
+            <span class="btn card" ng-class="getCardClass(this.card.status)" ng-disabled="isDisable(this.card.status)" ng-click="turnCard(this)">
                     {{card.value}}    
             </span>
         </span>

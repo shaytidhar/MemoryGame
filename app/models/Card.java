@@ -1,8 +1,8 @@
 package models;
 
 public class Card{
-	Integer  	value = null;
-	CardStatus 	status = null;
+	private Integer  	value = null;
+	private CardStatus 	status = null;
 	
 	public Integer getValue() {
 		return value;
@@ -40,5 +40,10 @@ public class Card{
 	public Card(Card crdCardToCopy) {
 		this.setValue(crdCardToCopy.getValue());
 		this.setStatus(crdCardToCopy.getStatus());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return ((obj != null) && (((Card)obj).getValue() == this.getValue()));
 	}	
 }

@@ -2,11 +2,78 @@ package models;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class Board {
 	
-	List<Card> lstCard = new ArrayList<Card>();
+
+	int							NUMBER_OF_REPEATS;
+	
+	private List<Card> 			lstCard 		= new ArrayList<Card>();
+	private Map<Integer,Card>	hmTurnedCards	= null;
+	
+	/***
+	 * Return the board size
+	 * 
+	 * @return The board size
+	 */
+	public int getBoradSize() {
+		
+		return (this.lstCard.size());
+	}
+
+	/***
+	 * Return the turned cards
+	 * 
+	 * @return
+	 */
+	public Map<Integer, Card> getTurnedCards() {
+		
+		return (this.hmTurnedCards);
+	}
+
+	/***
+	 * Return all the cards as hash map
+	 * 
+	 * @return
+	 */
+	public HashMap<Integer, Card> getCardsListAsHashMap() {
+		
+		HashMap<Integer, Card> hmToReturn = new HashMap<Integer, Card>();
+		
+		// Run through the cards
+		for (int nCardIndex = 0; nCardIndex < getBoradSize(); nCardIndex++)
+		{
+			hmToReturn.put(nCardIndex, lstCard.get(nCardIndex));
+		}
+		
+		return (hmToReturn);
+	}
+
+	/***
+	 * Clear the turned cards hash map 
+	 */
+	public void clearTurnedCards() {
+		hmTurnedCards.clear();
+	}
+
+	/***
+	 * Change turned cards by given status
+	 * 
+	 * @param exposed
+	 */
+	public void changeTurnedCardsStatus(CardStatus csStatusToChange) {
+		
+		// Run through turned cards
+		for (Card crdCurrentCard : this.hmTurnedCards.values())
+		{
+			crdCurrentCard.setStatus(csStatusToChange);
+		}
+	}
 	
 	/***
 	 * Sets a new shuffles board
@@ -17,10 +84,14 @@ public class Board {
 	 */
 	public void initialShuffledBoard(int nNumOfCards, int nNumOfRepeats) {
 		
+		NUMBER_OF_REPEATS = nNumOfRepeats;
+		
 		// If number of card and number of repeats Ok
-		if ((nNumOfCards > 2) &&
+		if ((nNumOfCards > NUMBER_OF_REPEATS) &&
 			(nNumOfRepeats > 1))
 		{
+			hmTurnedCards = new HashMap<Integer, Card>();
+			
 			// Initial the board
 			this.initialBoardInOrder(nNumOfCards, nNumOfRepeats);
 			
@@ -52,51 +123,136 @@ public class Board {
 	}
 
 	/***
-	 * Return all the cards
-	 * If status is upside down doesnt get the value
-	 * 
-	 * @return
-	 */
-	public List<Card> getAllCardsForDisplay() {
-		
-		List<Card> lstCardForDisplay = new ArrayList<Card>();
-
-		// Run through cards
-		for (Card crdCurrentCard : this.lstCard)
-		{
-			Card crdCardToDisplay = new Card(crdCurrentCard);
-			
-			// If upside down
-			if (crdCardToDisplay.getStatus() == CardStatus.UPSIDE_DOWN)
-			{
-				// Set value as null
-				crdCardToDisplay.setValue(null);
-			}
-
-			lstCardForDisplay.add(crdCardToDisplay);
-		}
-		
-		return (lstCardForDisplay);
-	}
-
-	/***
-	 * Return the board size
-	 * 
-	 * @return The board size
-	 */
-	public int getBoradSize() {
-		
-		return (this.lstCard.size());
-	}
-
-	/***
-	 * Return Card from the board by given index
+	 * Flip Card
+	 * Set the card as turned
 	 * 
 	 * @param nPlayerChosenCard
 	 * @return Chosen card
 	 */
-	public Card getCardByIndex(int nPlayerChosenCard) {
+	public Card flipCardByIndex(int nPlayerChosenCard) {
+		
+		
+		Card crdToReturn = null;
+		
+		// Check if turned card full
+		if (this.hmTurnedCards.size() < NUMBER_OF_REPEATS)
+		{
+			
+			crdToReturn = this.lstCard.get(nPlayerChosenCard);
+			
+			// If already exposed or turned
+			if ((crdToReturn.getStatus() == CardStatus.EXPOSED) || 
+				(crdToReturn.getStatus() == CardStatus.TURNED))
+			{
+				// Set as null
+				crdToReturn = null;			
+			}
+			// OK
+			else
+			{			
+				// Turn card
+				crdToReturn.setStatus(CardStatus.TURNED);
+				
+				// Keep the card as turned
+				hmTurnedCards.put(nPlayerChosenCard, crdToReturn);			
+			}
+		}
+		
+		return (crdToReturn);
+	}
 
-		return (lstCard.get(nPlayerChosenCard));
+	/**
+	 * Check the board status
+	 * 
+	 * Check the turned card
+	 * 
+	 * @return
+	 */
+	public BoardStatus checkStatus() {
+
+		BoardStatus bsToReturn = BoardStatus.IN_PROGRESS;
+		
+		// If not first choose
+		if (hmTurnedCards.size() > 1)
+		{
+			// If not equals 
+			if (!isChosenCardsAreEquals())
+			{
+				bsToReturn = BoardStatus.WRONG;
+			}
+			// If equals
+			else
+			{
+				// If last choose
+				if (hmTurnedCards.size() == NUMBER_OF_REPEATS)
+				{	
+					// If all cards exposed
+					if (checkIfGameOver())
+					{
+						bsToReturn = BoardStatus.WON;
+					}
+					else
+					{
+						bsToReturn = BoardStatus.CORRECT;
+					}
+				}
+			}
+		}
+		
+		return (bsToReturn);
+	}
+	
+	/***
+	 * Check if game over
+	 * 
+	 * Run over the board and check if all cards exposed
+	 * 
+	 * @return
+	 */
+	private boolean checkIfGameOver() {
+		
+		boolean bIsGameOver = true;
+		
+		// Run Through board
+		for (Card crdCurrCard : this.lstCard) {
+
+			// If upside down
+			if (crdCurrCard.getStatus() == CardStatus.UPSIDE_DOWN){
+				
+				// Game not finished
+				bIsGameOver = false;
+				
+				break;
+			}
+		}
+		
+		return (bIsGameOver);
+	}
+
+	/***
+	 * Check if the chosen cards are equals
+	 * 
+	 * @return
+	 */
+	private boolean isChosenCardsAreEquals() {
+		
+		boolean bIsChosenCardsEquals = true;
+		
+		Iterator<Entry<Integer, Card>> it = hmTurnedCards.entrySet().iterator();
+	    
+		// Get first card
+		Card crdFirstCard = it.next().getValue();
+		
+		// Run through turned cards while equals
+		while (bIsChosenCardsEquals && it.hasNext()) {
+			
+			// If next equals
+	        if (!crdFirstCard.equals((Card)it.next().getValue()))
+	        {
+	        	bIsChosenCardsEquals = false;
+	        }
+	    }
+		
+		return (bIsChosenCardsEquals);
 	}
 }
