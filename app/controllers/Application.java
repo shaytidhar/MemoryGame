@@ -1,7 +1,10 @@
 package controllers;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 import models.Card;
 import models.Game;
@@ -64,6 +67,7 @@ public class Application extends Controller {
 	    		
 	    		// Convert to Json
 	    		return ok(new ObjectMapper().convertValue(crdToReturn,  JsonNode.class));
+	    		
 	    	}
     	}
     	

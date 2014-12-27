@@ -14,10 +14,13 @@ myApp.directive('memoryGameBoard', ['$http',
         restrict: 'E',
         templateUrl: './javascripts/memoryGameBoard/memoryGameBoard.html',
         controller: function($scope, $http) {
-                        
+                
+            var stopObject;
+            
             // Initialize the game board
             $scope.initBoard = function()
-            {
+            {                
+                
                 // Initial cards
                 $scope.cards = [];
                 
@@ -25,6 +28,10 @@ myApp.directive('memoryGameBoard', ['$http',
                 $scope.players = [];
                                
                 $scope.waitForMyTurn();
+                                
+                $scope.$on('$destroy', function() {
+                    $scope.stopRefresh();
+                });
             };
                         
             // Turn a card
@@ -91,6 +98,24 @@ myApp.directive('memoryGameBoard', ['$http',
                             
                             // Handle the game result
                             $scope.gameResultHandler(response);
+                            
+                            // If game on
+                            if (response.gameStatus === "IN_GAME") {
+                                
+                                // If turn pass
+                                if (response.currentPlayer.name != $scope.userName) {
+                                    
+                                    // Go to wait mode
+                                    $scope.waitForMyTurn();                   
+                                }
+                            }
+                            // Game over
+                            else if (response.gameStatus === "OVER") {
+                                
+                                // Call game over handler
+                                $scope.gameOverHandler(response.currentPlayer);
+                            }
+                            
                         }
                     })
                     .error(function(resopnse) {
@@ -110,9 +135,6 @@ myApp.directive('memoryGameBoard', ['$http',
 
                 // Set players
                 $scope.updatePlayers(response.changedPlayers);
-
-                // Check game status
-                $scope.checkGameStatus(response.gameStatus, response.currentPlayer);
             };
             
             // Update the board by the given changed cards
@@ -142,72 +164,71 @@ myApp.directive('memoryGameBoard', ['$http',
                 }
             };
             
-            // Check the turn status and act accordinaly
-            $scope.checkGameStatus = function(turnStatus, currentPlayer) {
-                                
-                debugger;
-                // Over
-                if (turnStatus === "OVER")
-                {
-                    // If current user
-                    if (currentPlayer.name === $scope.userName){
-                        alertify.success("ניצחת!");
-                    }
-                    else {
-                        alertify.error("הפסדת!");
-                    }
+            // Check who won
+            $scope.gameOverHandler = function(currentPlayer) {
+                
+                // If current user
+                if (currentPlayer.name === $scope.userName){
+                    alertify.success("ניצחת!");                        
                 }
-                // In Game
                 else {
-                    
-                    // If turn pass
-                    if (currentPlayer.name != $scope.userName) {
-                        // Go to wait mode
-                        $scope.waitForMyTurn();                   
-                    }
+                    alertify.error("הפסדת!");                        
                 }
+                
+                // Stop interval
+                $scope.stopRefresh();
             };
             
             // Refresh game status till it's my turn
             $scope.waitForMyTurn = function () {
 
-                // Not my turn
-                $scope.myTurnClass = "disabledBoard";
                 
-                // Get game status
-                var stop = $interval(function() {
-                    $http.get("/getGameStatus")
-                        .success(function(response) {
-                        
-                        // If game not set
-                        if (response === "") {
+                // Only if interval stoped
+                if (angular.isUndefined(stopObject)) {
+                    
+                    // Not my turn
+                    $scope.myTurnClass = "disabledBoard";
+                    // Get game status
+                    stopObject = $interval(function() {
+                        $http.get("/getGameStatus")
+                            .success(function(response) {
 
-                            alertify.error("המשחק לא מאותחל");
-                            
-                            $interval.cancel(stop);
-                            
-                            // Go to settings
-                            $location.path("/Set");
-                        }
-                        else {
-                          
-                            // Handle the game result
-                            $scope.gameResultHandler(response);
+                            // If game not set
+                            if (response === "") {
 
-                            // If it's my turn
-                            if ($scope.userName === response.currentPlayer.name)
-                            {
-                                $interval.cancel(stop);
+                                alertify.error("המשחק לא מאותחל");
 
-                                // My turn!
-                                $scope.myTurnClass = "";
+                                $scope.stopRefresh();
+
+                                // Go to settings
+                                $location.path("/Set");
                             }
-                        }
-                    })
-                    .error(function(resopnse) {
-                        alertify.error("התרחשה שגיאה ברענון הלוח");
-                    });  
-                }, 2000);
+                            else {
+
+                                // Handle the game result
+                                $scope.gameResultHandler(response);
+
+                                // Game over                            
+                                if (response.gameStatus === "OVER") {
+
+                                    // Call game over handler
+                                    $scope.gameOverHandler(response.currentPlayer);
+                                }
+                                // If it's my turn
+                                else if ($scope.userName === response.currentPlayer.name)
+                                {
+                                    $scope.stopRefresh();
+
+                                    // My turn!
+                                    $scope.myTurnClass = "";
+                                }
+                            }
+                        })
+                        .error(function(resopnse) {
+                            alertify.error("התרחשה שגיאה ברענון הלוח");
+                        });  
+                    }, 1000);
+                }
             };
             
             // Return card's class by its status
@@ -246,6 +267,15 @@ myApp.directive('memoryGameBoard', ['$http',
                 
                 return (strChosenCardStatus != "UPSIDE_DOWN");
             };
+            
+            $scope.stopRefresh = function () {
+                
+                if (!angular.isUndefined(stopObject)) {
+                        
+                        $interval.cancel(stopObject);
+                        stopObject = undefined;
+                }   
+            }
             
             $scope.initBoard();
         }

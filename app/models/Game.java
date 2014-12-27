@@ -14,7 +14,7 @@ public class Game {
 	
 	private static 	Map<Integer, Player>	hmPlayers 			= null;
 	private static 	Board 					brdMemoryGameBoard 	= null;
-	private static	int						nCurrentPlayer		= 1;
+	private static	int						nCurrentPlayer		= 0;
 	private static 	GameStatus				gsGameStatus		= null;	
 	
 	/**
@@ -65,6 +65,7 @@ public class Game {
 		
 		// Sets players
 		hmPlayers = new HashMap<Integer, Player>();
+		nCurrentPlayer = 0;
 		
 		for (String strCurrPlayerName : lstPlayers) {
 			
