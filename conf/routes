@@ -3,11 +3,11 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index()
+GET 	/    						controllers.Assets.at(path="/public", file="index.html")
 POST    /startGame                  controllers.Application.startGame()
 POST    /flipCard                  	controllers.Application.flipCard()
-GET    	/getBoardState              controllers.Application.getBoardState()
-GET    	/getRefreshedBoard          controllers.Application.getRefreshedBoard()
+GET    	/getFlipResult              controllers.Application.getFlipResult()
+GET    	/getGameStatus          	controllers.Application.getGameStatus()
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.at(path="/public", file)
+GET     /*file               controllers.Assets.at(path="/public", file)

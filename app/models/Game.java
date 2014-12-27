@@ -1,81 +1,85 @@
 package models;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Game {
 	
-	private static int				NUMBER_OF_REPEATS 	= 2;
-	private static int				NUMBER_OF_CARDS		= 10;
+	private static int	NUMBER_OF_REPEATS 	= 2;
+	private static int	NUMBER_OF_CARDS		= 3;
+	private static int	NUMBER_OF_PLAYERS	= 2;
 	
-	private static List<Player> 	lstPlayers 			= null;
-	private static Board 			brdMemoryGameBoard 	= null;
-	private static Player			plrCurrentPlayer	= null;
-	private static boolean			bisGameOn			= false;	
+	private static 	Map<Integer, Player>	hmPlayers 			= null;
+	private static 	Board 					brdMemoryGameBoard 	= null;
+	private static	int						nCurrentPlayer		= 1;
+	private static 	GameStatus				gsGameStatus		= null;	
 	
 	/**
 	 * Private Ctor (because static)
 	 */
 	private Game()
 	{	
-		lstPlayers = new ArrayList<Player>();
-		lstPlayers.add(new Player("Shay"));
-		lstPlayers.add(new Player("Osher"));
+		
 	}
 	
-	public Player getCurrentPlayer()
+	public static Player getCurrentPlayer()
 	{
-		return (plrCurrentPlayer);
+		return (hmPlayers.get(nCurrentPlayer));
 	}
 	
-	public boolean isGameOn()
+	/***
+	 * Move to the next player
+	 */
+	private static void nextPlayer()
 	{
-		return (bisGameOn);
+		nCurrentPlayer++;
+		
+		// If last player
+		if (nCurrentPlayer == NUMBER_OF_PLAYERS)
+		{
+			nCurrentPlayer = 0;
+		}
 	}
 	
+	public static boolean isGameOn()
+	{
+		return (gsGameStatus != null);
+	}
+			
 	/***
 	 * Initial game
 	 * 
 	 * @return
 	 */
-	public static GameStatusResult initialGame()
+	public static void initialGame(List<String> lstPlayers,
+									int nNumOfCards,
+									int nNumOfRepeats)
 	{		
-		return (initialGameInternalUse());
-	}
-	
-	/***
-	 * Initial game
-	 * 
-	 * @return
-	 */
-	public static GameStatusResult initialGameCustomConfigurations(
-										int nNumOfCards,
-										int nNumOfRepeats)
-	{		
+		// Set configurations
 		NUMBER_OF_CARDS = nNumOfCards;
 		NUMBER_OF_REPEATS = nNumOfRepeats;
+		NUMBER_OF_PLAYERS = lstPlayers.size();
 		
-		return (initialGameInternalUse());
-	}
-	
-	/***
-	 * Initial game
-	 * 
-	 * @return
-	 */
-	private static GameStatusResult initialGameInternalUse()
-	{
-		GameStatusResult gsrResult = new GameStatusResult();    
-		brdMemoryGameBoard = new Board();  
+		// Sets players
+		hmPlayers = new HashMap<Integer, Player>();
+		
+		for (String strCurrPlayerName : lstPlayers) {
+			
+			// id = size of map
+			int id = hmPlayers.size();
+			
+			// Add Player
+			hmPlayers.put(id, new Player(id, strCurrPlayerName));		
+		}
+		
+		Game.brdMemoryGameBoard = new Board();  
+		Game.gsGameStatus = GameStatus.START;
 		
 		// Initial board
-		brdMemoryGameBoard.initialShuffledBoard(NUMBER_OF_CARDS, NUMBER_OF_REPEATS);
-		
-		// Set the changed cards result
-		gsrResult.setUpsideDownChangedCards(
-				brdMemoryGameBoard.getCardsListAsHashMap());
-		
-		return (gsrResult);
+		Game.brdMemoryGameBoard.initialShuffledBoard(NUMBER_OF_CARDS, NUMBER_OF_REPEATS);
 	}
 	
 	/***
@@ -89,14 +93,14 @@ public class Game {
 		
 		// If illegal
 		if ((nPlayerChosenCard < 0) ||
-			(nPlayerChosenCard > brdMemoryGameBoard.getBoradSize()))
+			(nPlayerChosenCard > Game.brdMemoryGameBoard.getBoradSize()))
 		{
 			// Write error msg
 		}
 		else
 		{
 			// Get card value	
-			crdCardToFlip = brdMemoryGameBoard.flipCardByIndex(nPlayerChosenCard);
+			crdCardToFlip = Game.brdMemoryGameBoard.flipCardByIndex(nPlayerChosenCard);
 				
 			
 			// If illegal
@@ -110,46 +114,73 @@ public class Game {
 	}
 
 	/***
-	 * Get board state
+	 * Get the flip result
 	 * 
 	 * @return 
 	 */
-	public static GameStatusResult getBoardState() {
-		
-		GameStatusResult gsrResult = new GameStatusResult(); 
-		
-		BoardStatus bsBoardStatus = brdMemoryGameBoard.checkStatus();
-		
-		gsrResult.setBoardStatus(bsBoardStatus);
-		
-		// If not in progress
-		if (bsBoardStatus != BoardStatus.IN_PROGRESS){
-		
-			// If correct or won 
-			if ((bsBoardStatus == BoardStatus.CORRECT) ||
-				(bsBoardStatus == BoardStatus.WON)){
+	public static GameStatusResult getFlipResult() {
+				
+		TurnedCardsStatus tsTurnedCardsStatus = Game.brdMemoryGameBoard.checkTurnedCardsStatus();
+		Game.gsGameStatus = GameStatus.IN_GAME;
+		Map<Integer, Card> hmTurnedCardsToRemember = new HashMap<Integer, Card>();
+				
+		// If not in progress (player correct \ wrong)
+		if (tsTurnedCardsStatus != TurnedCardsStatus.IN_PROGRESS) {
+					
+			// If correct
+			if (tsTurnedCardsStatus == TurnedCardsStatus.CORRECT) {
 
 				// Set turned cards as exposed 
-				brdMemoryGameBoard.changeTurnedCardsStatus(CardStatus.EXPOSED);
-				
-				// Set cards to change
-				gsrResult.setChangedCards(brdMemoryGameBoard.getTurnedCards());
+				Game.brdMemoryGameBoard.changeTurnedCardsStatus(CardStatus.EXPOSED);
+								
+				// Increase points
+				getCurrentPlayer().increaseScore();
+								
+				// If game over
+				if (Game.brdMemoryGameBoard.checkIfGameOver()) {
+					
+					// Set game status
+					Game.gsGameStatus = GameStatus.OVER;
+					
+					// Set the winner
+					setWinnerPlayer();
+				}
 			}
 			// If wrong
-			else if (bsBoardStatus == BoardStatus.WRONG){
-			
+			else if (tsTurnedCardsStatus == TurnedCardsStatus.WRONG) {
+							
 				// Flip back the cards 
-				brdMemoryGameBoard.changeTurnedCardsStatus(CardStatus.UPSIDE_DOWN);
-				
-				// Set cards to change
-				gsrResult.setUpsideDownChangedCards(brdMemoryGameBoard.getTurnedCards());
-			}
+				Game.brdMemoryGameBoard.changeTurnedCardsStatus(CardStatus.UPSIDE_DOWN);
+												
+				// Set next player
+				nextPlayer();
+			}			
+
+			// Save turned cards before clear
+			hmTurnedCardsToRemember = Game.brdMemoryGameBoard.getTurnedCards();
 			
 			// Clear turned cards
-			brdMemoryGameBoard.clearTurnedCards();
+			Game.brdMemoryGameBoard.clearTurnedCards();
 		}
+				
+		return (getGameStatus(hmTurnedCardsToRemember));
+	}
+
+	/***
+	 * Check which player got the biggest score
+	 * 
+	 * @return
+	 */
+	private static void setWinnerPlayer() {
 		
-		return (gsrResult);
+		Game.nCurrentPlayer = (Collections.max(Game.hmPlayers.values(),  new Comparator<Player>() {
+
+			@Override
+			public int compare(Player arg0, Player arg1) {
+				
+				return arg0.getScore() - arg1.getScore();
+			}
+	    })).getId();
 	}
 
 	/***
@@ -157,13 +188,36 @@ public class Game {
 	 * 
 	 * @return
 	 */
-	public static GameStatusResult getRefreshedBoard() {
+	public static GameStatusResult getGameStatus(Map<Integer, Card> hmTurnedCards) {
 		
 		GameStatusResult gsrResult = new GameStatusResult(); 				
 		
+		Map<Integer, Card> hmCardsToReutrn = null;
+		
+		// If partial 
+		if (hmTurnedCards != null) {
+			
+			// Get turned cards
+			hmCardsToReutrn = hmTurnedCards;
+		}
+		// If complete
+		else {
+			
+			// Get all cards
+			hmCardsToReutrn = Game.brdMemoryGameBoard.getCardsListAsHashMap();
+		}
+		
 		// Set the changed cards result
-		gsrResult.setChangedCards(
-				brdMemoryGameBoard.getCardsListAsHashMap());
+		gsrResult.setChangedCardsForDisplay(hmCardsToReutrn);
+		
+		// Set current user
+		gsrResult.setCurrentPlayer(getCurrentPlayer());
+		
+		// Set players
+		gsrResult.setChacngedPlayers(Game.hmPlayers);
+		
+		// Set game status
+		gsrResult.setGameStatus(Game.gsGameStatus);
 		
 		return (gsrResult);
 	}

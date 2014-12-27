@@ -1,0 +1,49 @@
+<div class="container">
+    <h3>
+        הגדרות משחק   
+    </h3>
+
+    <!-- Board -->
+    <h4>הגדרות לוח</h4>
+    <div class="row">
+        <div class="col-lg-2 pull-right">
+            <div class="form-group">
+                <label>מספר קלפים</label>
+                <input ng-model="numOfCards" type="number" class="form-control">                
+            </div>
+        </div>
+        <div class="col-lg-2 pull-right">
+            <div class="form-group">
+                <label>מספר חזרות</label>
+                <input ng-model="numOfRepeats" type="number" class="form-control">                
+            </div>
+        </div>
+    </div>
+    
+    <!-- Players -->
+    <h4>שחקנים</h4>
+    <div class="row">
+        <div class="col-lg-3 pull-right">
+            <label >שם:</label>
+            <input  ng-model="playerToAddName" type="text">
+            <button type="button"  ng-click="addPlayer()" class="btn btn-default btn-sm">
+                <span class="glyphicon glyphicon-plus"></span>
+            </button>
+            <button type="button"  ng-click="deletePlayers()" class="btn btn-default btn-sm">
+                <span class="glyphicon glyphicon-trash"></span>
+            </button>
+        </div>        
+    </div>
+    <div>
+        <ul>
+            <li ng-repeat="player in players">
+                <span ng-bind="player.name"></span>
+            </li>
+        </ul>
+    </div>
+    
+    <button type="button"  ng-click="startNewGame()" class="btn btn-default">
+        <span>צור משחק</span>
+        <span class="glyphicon glyphicon-play"></span>
+    </button>
+</div>

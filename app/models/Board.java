@@ -58,7 +58,7 @@ public class Board {
 	 * Clear the turned cards hash map 
 	 */
 	public void clearTurnedCards() {
-		hmTurnedCards.clear();
+		hmTurnedCards = null;
 	}
 
 	/***
@@ -84,13 +84,12 @@ public class Board {
 	 */
 	public void initialShuffledBoard(int nNumOfCards, int nNumOfRepeats) {
 		
-		NUMBER_OF_REPEATS = nNumOfRepeats;
+		this.NUMBER_OF_REPEATS = nNumOfRepeats;
 		
 		// If number of card and number of repeats Ok
-		if ((nNumOfCards > NUMBER_OF_REPEATS) &&
+		if ((nNumOfCards > 1) &&
 			(nNumOfRepeats > 1))
-		{
-			hmTurnedCards = new HashMap<Integer, Card>();
+		{		
 			
 			// Initial the board
 			this.initialBoardInOrder(nNumOfCards, nNumOfRepeats);
@@ -134,8 +133,14 @@ public class Board {
 		
 		Card crdToReturn = null;
 		
+		// If first choise
+		if (hmTurnedCards == null) {
+			
+			hmTurnedCards = new HashMap<Integer, Card>();
+		}
+		
 		// Check if turned card full
-		if (this.hmTurnedCards.size() < NUMBER_OF_REPEATS)
+		if (this.hmTurnedCards.size() < this.NUMBER_OF_REPEATS)
 		{
 			
 			crdToReturn = this.lstCard.get(nPlayerChosenCard);
@@ -162,39 +167,29 @@ public class Board {
 	}
 
 	/**
-	 * Check the board status
-	 * 
-	 * Check the turned card
+	 * Check the turned cards status
 	 * 
 	 * @return
 	 */
-	public BoardStatus checkStatus() {
+	public TurnedCardsStatus checkTurnedCardsStatus() {
 
-		BoardStatus bsToReturn = BoardStatus.IN_PROGRESS;
+		TurnedCardsStatus bsToReturn = TurnedCardsStatus.IN_PROGRESS;
 		
 		// If not first choose
-		if (hmTurnedCards.size() > 1)
+		if (hmTurnedCards != null)
 		{
 			// If not equals 
 			if (!isChosenCardsAreEquals())
 			{
-				bsToReturn = BoardStatus.WRONG;
+				bsToReturn = TurnedCardsStatus.WRONG;
 			}
 			// If equals
 			else
 			{
 				// If last choose
-				if (hmTurnedCards.size() == NUMBER_OF_REPEATS)
-				{	
-					// If all cards exposed
-					if (checkIfGameOver())
-					{
-						bsToReturn = BoardStatus.WON;
-					}
-					else
-					{
-						bsToReturn = BoardStatus.CORRECT;
-					}
+				if (hmTurnedCards.size() == this.NUMBER_OF_REPEATS)
+				{						
+					bsToReturn = TurnedCardsStatus.CORRECT;					
 				}
 			}
 		}
@@ -209,7 +204,7 @@ public class Board {
 	 * 
 	 * @return
 	 */
-	private boolean checkIfGameOver() {
+	public boolean checkIfGameOver() {
 		
 		boolean bIsGameOver = true;
 		

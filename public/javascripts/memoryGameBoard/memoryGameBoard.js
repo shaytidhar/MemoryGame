@@ -2,35 +2,33 @@
 
 myApp.directive('memoryGameBoard', ['$http',
                                     '$timeout',
+                                    '$interval',
+                                    '$location',
   function($http,
-           $timeout) {
+           $timeout,
+           $interval,
+           $location) {
   
     return {
     
         restrict: 'E',
         templateUrl: './javascripts/memoryGameBoard/memoryGameBoard.html',
         controller: function($scope, $http) {
-            
+                        
             // Initialize the game board
             $scope.initBoard = function()
             {
                 // Initial cards
                 $scope.cards = [];
                 
-                $http.post("/startGame")
-                    .success(function(response) {
-               
-                        // Update the board
-                        $scope.updateBoardCards(response.changedCards);            
-                    })
-                    .error(function(resopnse) {
-                            alertify.error("התרחשה שגיאה בטעינת הלוח");
-                        }                        
-                    );  
+                // Initial players
+                $scope.players = [];
+                               
+                $scope.waitForMyTurn();
             };
-            
+                        
             // Turn a card
-            $scope.turnCard = function(crdChosenCard)
+            $scope.flipCard = function(crdChosenCard)
             {
                 // If already turned
                 if (crdChosenCard.card.status === "TURNED")
@@ -45,80 +43,175 @@ myApp.directive('memoryGameBoard', ['$http',
                 // Upside down
                 else if (crdChosenCard.card.status === "UPSIDE_DOWN")
                 {                
-                    // Play turn
-                    $scope.playTurn(crdChosenCard);
+                    // Flip the card
+                    $scope.flipCardHandler(crdChosenCard);
                 }
             };
             
-            // Play turn
-            $scope.playTurn = function(crdChosenCard) {
+            // Flip the card
+            $scope.flipCardHandler = function(crdChosenCard) {
+              
                 $http.post("/flipCard", 
                             { 
-                                nChosenCard: crdChosenCard.$index
+                                nChosenCard: crdChosenCard.$index,
+                                strUserName: $scope.userName
                             })
                 .success(function(response) {
                    
                     // Flip the card
                     crdChosenCard.card = response;
 
-                    // Wait a second                    
+                    // Wait a second              
                     $timeout(function(){
                         
-                        // Check status
-                        $scope.getBoardStatus();
-                    }, 1000);
+                        // Get the flip result
+                        $scope.getFlipResult();
+                    }, 2000);
                 })
                 .error(function(resopnse) {
                         alertify.error("סבלנות");
-                    }                        
-                );
+                });
             };
             
             // Check the board state
-            $scope.getBoardStatus = function(){
-                
-                $http.get("/getBoardState")
+            $scope.getFlipResult = function(){
+                                
+                $http.get("/getFlipResult")
                     .success(function(response){
                     
-                        $scope.checkTurnStatus(response.boardStatus);
-                    
-                        // Update the board
-                        $scope.updateBoardCards(response.changedCards);    
+                        // If game not set
+                        if (response === "") {
+
+                            alertify.error("המשחק לא מאותחל");
+                            
+                            // Go to settings
+                            $location.path("/Set");
+                        }
+                        else {
+                            
+                            // Handle the game result
+                            $scope.gameResultHandler(response);
+                        }
                     })
                     .error(function(resopnse) {
                         alertify.error("התרחשה שגיאה");
                     });
             };
             
+            // Handle the game result
+            $scope.gameResultHandler = function(response)
+            {                    
+                
+                // Update the board
+                $scope.updateBoardCards(response.changedCards); 
+
+                // Set current user
+                $scope.currentPlayer = response.currentPlayer;                 
+
+                // Set players
+                $scope.updatePlayers(response.changedPlayers);
+
+                // Check game status
+                $scope.checkGameStatus(response.gameStatus, response.currentPlayer);
+            };
+            
             // Update the board by the given changed cards
             $scope.updateBoardCards = function(hmChangedCards)
             {
-                // Run through changed cards
-                $.each(hmChangedCards, function (key, crdCurrCard) {
+                if (hmChangedCards != null) {
+                    
+                    // Run through changed cards
+                    $.each(hmChangedCards, function (key, crdCurrCard) {
 
-                    // Set changed card
-                    $scope.cards[key] = crdCurrCard;
-                });                    
+                        // Set changed card
+                        $scope.cards[key] = crdCurrCard;
+                    });                    
+                }
+            };
+            
+            // Update the players list
+            $scope.updatePlayers = function(hmPlayers)
+            {
+                if (hmPlayers != null) {
+                    // Run through changed cards
+                    $.  each(hmPlayers, function (key, crdCurrPlayer) {
+
+                        // Set changed card
+                        $scope.players[key] = crdCurrPlayer;
+                    });                    
+                }
             };
             
             // Check the turn status and act accordinaly
-            $scope.checkTurnStatus = function(turnStatus)
-            {
-                // Won
-                if (turnStatus === "WON")
+            $scope.checkGameStatus = function(turnStatus, currentPlayer) {
+                                
+                debugger;
+                // Over
+                if (turnStatus === "OVER")
                 {
-                    alertify.success("המשחק נגמר");
+                    // If current user
+                    if (currentPlayer.name === $scope.userName){
+                        alertify.success("ניצחת!");
+                    }
+                    else {
+                        alertify.error("הפסדת!");
+                    }
                 }
-                // Wrong
-                else if (turnStatus === "WORONG")
-                
-                    $http.get("/getRefreshedBoard");
+                // In Game
+                else {
+                    
+                    // If turn pass
+                    if (currentPlayer.name != $scope.userName) {
+                        // Go to wait mode
+                        $scope.waitForMyTurn();                   
+                    }
                 }
             };
             
+            // Refresh game status till it's my turn
+            $scope.waitForMyTurn = function () {
+
+                // Not my turn
+                $scope.myTurnClass = "disabledBoard";
+                
+                // Get game status
+                var stop = $interval(function() {
+                    $http.get("/getGameStatus")
+                        .success(function(response) {
+                        
+                        // If game not set
+                        if (response === "") {
+
+                            alertify.error("המשחק לא מאותחל");
+                            
+                            $interval.cancel(stop);
+                            
+                            // Go to settings
+                            $location.path("/Set");
+                        }
+                        else {
+                          
+                            // Handle the game result
+                            $scope.gameResultHandler(response);
+
+                            // If it's my turn
+                            if ($scope.userName === response.currentPlayer.name)
+                            {
+                                $interval.cancel(stop);
+
+                                // My turn!
+                                $scope.myTurnClass = "";
+                            }
+                        }
+                    })
+                    .error(function(resopnse) {
+                        alertify.error("התרחשה שגיאה ברענון הלוח");
+                    });  
+                }, 2000);
+            };
+            
             // Return card's class by its status
-            $scope.getCardClass = function(strChosenCardStatus)
-            {
+            $scope.getCardClass = function(strChosenCardStatus) {
                 var strCardClass = "";
                 
                 // If upside down
@@ -138,15 +231,22 @@ myApp.directive('memoryGameBoard', ['$http',
                 }
                 
                 return (strCardClass);
-            }
+            };
+            
+            // Return player row's class by current
+            $scope.getPlayerRowClass = function(playerRow) {
+                if ($scope.currentPlayer != null)
+                {
+                    return (playerRow.player.id === $scope.currentPlayer.id ? "success" : "");
+                }
+            }            
             
             // Check if card should be disabled
-            $scope.isDisable = function(strChosenCardStatus)
-            {
+            $scope.isDisable = function(strChosenCardStatus) {
+                
                 return (strChosenCardStatus != "UPSIDE_DOWN");
-            }
+            };
             
-            // Initialize the board
             $scope.initBoard();
         }
     };

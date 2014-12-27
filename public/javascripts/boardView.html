@@ -1,0 +1,54 @@
+<div class="container-fluid">
+    <div class="row">
+        
+        <!-- Players -->
+        <div class="col-lg-3 pull-right">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>
+                            <p class="text-right">
+                                #
+                            </p>
+                        </th>
+                        <th>
+                            <p class="text-right">
+                                שם שחקן
+                            </p>
+                        </th>
+                        <th dir="rtl">
+                            <p class="text-right">
+                                ניקוד
+                            </p>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="player in players" ng-class="getPlayerRowClass(this)">
+                        <th scope="row">
+                            <p class="text-right">
+                                {{$index + 1}}
+                            </p>
+                        </th>
+                        <td>
+                            <p class="text-right">
+                                {{player.name}}
+                            </p>
+                        </td>
+                        <td>
+                            <p class="text-right">
+                                {{player.score}}
+                            </p>
+                        </td>
+                    </tr>
+              </tbody>
+            </table>
+        </div>
+        
+        <!-- Board -->
+        <div class="col-lg-9 pull-right">
+            <memory-game-board>
+            </memory-game-board>          
+        </div>
+    </div>
+</div>

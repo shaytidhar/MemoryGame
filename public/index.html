@@ -1,4 +1,4 @@
-<html>
+<html ng-app="myApp">
     <head>
 
         <!-- jQuery -->
@@ -10,7 +10,8 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
         
         <!-- Angular CDN-->
-        <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular-route.js"></script>
         
         <!-- Alertify -->
         <script src="javascripts/alertify.js"></script>
@@ -24,12 +25,48 @@
         <!-- My CSS -->
         <link rel="stylesheet" type="text/css" href="stylesheets/main.css">
     </head>
-    <body>
+    <body dir="rtl" ng-controller="memoryGameController">
         
-        <div ng-app="myApp" ng-controller="memoryGameController">
-            <input type="button" value="אפס לוח" class="btn" ng-click="initBoard()">
-            <memory-game-board>
-            </memory-game-board>
+        <!-- Navbar -->
+        <nav class="navbar navbar-default">
+            <div class="container">
+
+            <!-- Header -->
+            <div class="navbar-header pull-right">
+                <div class="container-fluid navbar-brand">
+
+                    <!-- Logo -->
+                    <span class="glyphicon glyphicon-question-sign"></span>
+
+                    <!-- Brand -->
+                    <span>
+                        משחק הזיכרון           
+                    </span>
+                </div>
+            </div>
+
+            <!-- Collapsed navbar -->
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav pull-right">
+                    <li>
+                      <a href="#/Go">ללוח</a>
+                    </li>
+                    <li>
+                      <a href="#/Set">הגדרות</a>
+                    </li>
+                  </ul>
+                <form class="navbar-form navbar-left">
+                  <div class="form-group">
+                    <input type="text" class="form-control" ng-model="userName" placeholder="הכנס שם">
+                  </div>
+                </form>
+            </div>
+
+            </div>
+        </nav>
+
+        <div class="container-fluid">     
+            <div ng-view class="view-animate"></div>
         </div>
     </body>
 </html>

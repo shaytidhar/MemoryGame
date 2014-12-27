@@ -1,32 +1,39 @@
 package models;
 
 public class Player {
-	String 	name;
-	int		score;
+	private int 	id;
+	private String 	name;
+	private int		score;
 		
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
 	public String getName() {
 		return name;
-	}
-	
-	public void setName(String name) {
-		this.name = name;
 	}
 	
 	public int getScore() {
 		return score;
 	}
 	
-	public void setScore(int score) {
-		this.score = score;
+	public void increaseScore() {
+		this.score += 10;
 	}
 
 	/***
 	 * Ctor
 	 * @param name
 	 */
-	public Player(String name) {
+	public Player(int id, String name) {
 		super();
 		
+		this.id = id;
 		this.name = name;
+		this.score = 0;
 	}	
 }

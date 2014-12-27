@@ -1,20 +1,19 @@
 package controllers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import models.Card;
 import models.Game;
 import play.mvc.Controller;
 import play.mvc.Result;
-import views.html.index;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Application extends Controller {
 
-    public static Result index() {
-        return ok(index.render("Your new application is ready."));
-    }
-    
+   
     /***
      * Start a memory game match.
      * Initial board, set game's configurations
@@ -23,7 +22,22 @@ public class Application extends Controller {
      */
     public static Result startGame() {
     	    	
-    	return ok(new ObjectMapper().convertValue(Game.initialGame(), JsonNode.class));
+    	// Get params
+    	JsonNode jnParams = 
+    			request().body().asJson();
+    	
+    	// Create player's name list
+    	List<String> lstPlayersNames = new ArrayList<String>();
+    	
+    	for (JsonNode jnCurrName : jnParams.get("players")) {
+    		lstPlayersNames.add(jnCurrName.get("name").asText());
+    	}
+    	
+    	Game.initialGame(lstPlayersNames,
+		    			jnParams.get("numOfCards").asInt(),
+		    			jnParams.get("numOfRepeats").asInt());
+    	
+    	return ok();
     }
     
     /***
@@ -33,22 +47,27 @@ public class Application extends Controller {
      */
     public static Result flipCard() {
     	
-    	int nPlayerChosenCard = 
-    			request().body().asJson().get("nChosenCard").asInt();
-		
-    	// Flip card
-    	Card crdToReturn = Game.flipCard(nPlayerChosenCard);
-    	    	
-    	// If not null
-    	if (crdToReturn != null){
-    		
-    		// Convert to Json
-    		return ok(new ObjectMapper().convertValue(crdToReturn,  JsonNode.class));
-    	}
-    	else
+    	String strUserName = 
+    			request().body().asJson().get("strUserName").asText();
+    	
+    	// If its the player turn and game is on
+    	if (strUserName.equals(Game.getCurrentPlayer().getName()) && Game.isGameOn())
     	{
-    		return internalServerError();
-    	}       
+	    	int nPlayerChosenCard = 
+	    			request().body().asJson().get("nChosenCard").asInt();
+			
+	    	// Flip card
+	    	Card crdToReturn = Game.flipCard(nPlayerChosenCard);
+	    	    	
+	    	// If not null
+	    	if (crdToReturn != null){
+	    		
+	    		// Convert to Json
+	    		return ok(new ObjectMapper().convertValue(crdToReturn,  JsonNode.class));
+	    	}
+    	}
+    	
+    	return internalServerError();
     }
     
     /***
@@ -56,9 +75,9 @@ public class Application extends Controller {
      *  
      * @return Result
      */
-    public static Result getBoardState() {
-    			
-    	return ok(new ObjectMapper().convertValue(Game.getBoardState(), JsonNode.class));  
+    public static Result getFlipResult() {
+    	
+    	return ok(new ObjectMapper().convertValue(Game.getFlipResult(), JsonNode.class));  
     }
     
     /***
@@ -66,8 +85,12 @@ public class Application extends Controller {
      *  
      * @return Result
      */
-    public static Result getRefreshedBoard() {
-    			    	
-    	return ok(new ObjectMapper().convertValue(Game.getRefreshedBoard(), JsonNode.class));  
+    public static Result getGameStatus() {
+    	 
+    	if (Game.isGameOn()) {  	
+    		 return ok(new ObjectMapper().convertValue(Game.getGameStatus(null), JsonNode.class));
+    	}
+    	
+    	return ok();
     }
 }
